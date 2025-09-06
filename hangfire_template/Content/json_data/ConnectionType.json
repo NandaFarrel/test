@@ -1,0 +1,18 @@
+﻿[
+  {
+    "ID": "sql",
+    "Name": "Connect to SQL"
+  },
+  {
+    "ID": "sharingfolder",
+    "Name": "Connect to Sharing Folder"
+  },
+  {
+    "ID": "lan",
+    "Name": "Connect to LAN"
+  },
+  {
+    "ID": "serialport",
+    "Name": "Connect to Serial Port"
+  }
+]

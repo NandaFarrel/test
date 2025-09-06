@@ -1,0 +1,22 @@
+﻿[
+  {
+    "ID": ".mdb",
+    "Name": "MDB"
+  },
+  {
+    "ID": ".csv",
+    "Name": "CSV"
+  },
+  {
+    "ID": ".txt",
+    "Name": "TEXT"
+  },
+  {
+    "ID": ".xlsx",
+    "Name": "Excel Worksheet"
+  },
+  {
+    "ID": ".sql",
+    "Name": "SQL"
+  }
+]

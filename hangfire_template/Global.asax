@@ -1,0 +1,1 @@
+<%@ Application Codebehind="Global.asax.cs" Inherits="hangfire_template.MvcApplication" Language="C#" %>

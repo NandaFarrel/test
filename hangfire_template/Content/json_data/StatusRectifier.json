@@ -1,0 +1,18 @@
+﻿[
+  {
+    "ID": 0,
+    "Name": "Off"
+  },
+  {
+    "ID": 1,
+    "Name": "Charging"
+  },
+  {
+    "ID": 2,
+    "Name": "Standby"
+  },
+  {
+    "ID": 3,
+    "Name": "Done"
+  }
+]
