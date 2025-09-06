@@ -1,7 +1,9 @@
 // Services/OpenProjectApiService.cs
 using hangfire_template.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -72,6 +74,35 @@ namespace hangfire_template.Services
                 // Jika gagal, lemparkan exception dengan pesan error dari API
                 var errorContent = await response.Content.ReadAsStringAsync();
                 throw new Exception($"Gagal membuat work package di OpenProject. Status: {response.StatusCode}. Error: {errorContent}");
+            }
+        }
+
+        /// <summary>
+        /// Mengambil semua Work Packages dari sebuah proyek di OpenProject.
+        /// </summary>
+        /// <param name="projectId">ID dari proyek di OpenProject (contoh: "my-project-identifier").</param>
+        /// <returns>List dari semua work packages yang ada di proyek tersebut.</returns>
+        public async Task<List<JObject>> GetAllWorkPackagesAsync(string projectId)
+        {
+            // Endpoint API untuk mengambil semua work packages
+            var requestUrl = $"/api/v3/projects/{projectId}/work_packages";
+
+            var response = await _httpClient.GetAsync(requestUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var json = JObject.Parse(responseBody);
+
+                // Mengambil daftar work packages dari response JSON
+                var workPackages = json["_embedded"]?["elements"]?.ToObject<List<JObject>>() ?? new List<JObject>();
+                return workPackages;
+            }
+            else
+            {
+                // Jika gagal, lemparkan exception dengan pesan error dari API
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Gagal mengambil work packages dari OpenProject. Status: {response.StatusCode}. Error: {errorContent}");
             }
         }
     }

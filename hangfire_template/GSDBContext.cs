@@ -7,7 +7,7 @@ namespace hangfire_template
 {
     public partial class GSDbContext : DbContext
     {
-        // --- DUA BARIS BARU DITAMBAHKAN DI SINI ---
+        // --- Model untuk OpenProject ---
         public virtual DbSet<TWorkPackage> TWorkPackages { get; set; }
         public virtual DbSet<TlkpUserMapping> TlkpUserMappings { get; set; }
         // ------------------------------------------
@@ -29,11 +29,10 @@ namespace hangfire_template
         public DbSet<ListSPCTPAD_ttcibd0018888> ListSPCTPAD_ttcibd0018888 { get; set; }
         public DbSet<ListSPCTPAD_ttdpur2018888> ListSPCTPAD_ttdpur2018888 { get; set; }
 
-        // DIUBAH: Menggunakan nama connection string yang benar dari Web.config
+        // DIUBAH: Hanya ada satu constructor yang menunjuk ke Web.config
         public GSDbContext() : base("name=HangfireDb") { }
 
-        public GSDbContext(string dbSource, string dbName, string dbUsers, string dbPass)
-            : base($"Data Source=" + dbSource + ";initial catalog=" + dbName + ";User Id=" + dbUsers + ";Password=" + dbPass + "; ") { }
+        // Constructor kedua yang menerima parameter manual sudah dihapus.
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -69,8 +68,8 @@ namespace hangfire_template
         public DbSet<TempListCustomer> TempListCustomer { get; set; }
         public DbSet<Table_SPT_STOCK> Table_SPT_STOCK { get; set; }
 
-        //public DbSet<TempListCapacityPlanning> TempListCapacityPlanning { get; set; }
-        public TargetDbContext() : base("name=TargetDbContext") { }
+        public TargetDbContext() : base("name=TargetDbContext") { } // Pastikan ada connection string "TargetDbContext" di Web.config
+
         public TargetDbContext(string dbSource, string dbName, string dbUsers, string dbPass)
             : base($"Data Source=" + dbSource + ";initial catalog=" + dbName + ";User Id=" + dbUsers + ";Password=" + dbPass + "; ") { }
 
@@ -87,8 +86,6 @@ namespace hangfire_template
             modelBuilder.Entity<TempListDataRejectPortalDBSQL>()
                  .Property(p => p.qoor)
                  .HasPrecision(18, 3);
-            //.HasColumnType("decimal(30,6)");
-
         }
     }
 }

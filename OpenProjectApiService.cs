@@ -1,60 +1,93 @@
-﻿// Controllers/OpenProjectSyncController.cs
-using hangfire_template.Models;
-using hangfire_template.Services;
+﻿using hangfire_template.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq; // Pastikan using ini ada
 using System;
-using System.Linq;
+using System.Collections.Generic; // Pastikan using ini ada
+using System.Configuration;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
-using System.Web.Mvc;
 
-namespace hangfire_template.Controllers
+namespace hangfire_template.Services
 {
-    public class OpenProjectSyncController : Controller
+    public class OpenProjectApiService
     {
-        /// <summary>
-        /// Metode ini akan dipanggil oleh Hangfire untuk memulai proses sinkronisasi.
-        /// </summary>
-        [HttpPost] // Menambahkan ini agar tidak bisa diakses langsung dari browser via GET
-        public async Task<string> SyncNewWorkPackages()
+        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly string _openProjectUrl;
+        private readonly string _apiKey;
+
+        public OpenProjectApiService()
         {
-            var db = new GSDbContext();
-            var apiService = new OpenProjectApiService();
-            int successCount = 0;
-            int errorCount = 0;
+            _openProjectUrl = ConfigurationManager.AppSettings["OpenProjectUrl"];
+            _apiKey = ConfigurationManager.AppSettings["OpenProjectApiKey"];
 
-            // 1. Ambil semua work package dari database yang belum disinkronkan (is_synced = false)
-            var workPackagesToSync = db.TWorkPackages.Where(wp => !wp.is_synced).ToList();
+            _httpClient.BaseAddress = new Uri(_openProjectUrl);
+            _httpClient.DefaultRequestHeaders.Accept.Clear();
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            if (!workPackagesToSync.Any())
+            // Otorisasi menggunakan API Key (diperlukan untuk membaca data)
+            var encodedKey = Convert.ToBase64String(Encoding.ASCII.GetBytes($"apikey:{_apiKey}"));
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", encodedKey);
+        }
+
+        /// <summary>
+        /// Mengambil semua work package dari sebuah proyek di OpenProject.
+        /// </summary>
+        public async Task<List<JObject>> GetAllWorkPackagesAsync(string projectId)
+        {
+            // Endpoint API untuk mendapatkan work package
+            var requestUrl = $"/api/v3/projects/{projectId}/work_packages";
+            var response = await _httpClient.GetAsync(requestUrl);
+
+            if (response.IsSuccessStatusCode)
             {
-                return "Tidak ada data baru untuk disinkronkan.";
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var result = JObject.Parse(responseBody);
+                // Data work package ada di dalam properti "_embedded" -> "elements"
+                var elements = result["_embedded"]["elements"].ToObject<List<JObject>>();
+                return elements;
             }
-
-            // 2. Looping setiap work package
-            foreach (var wp in workPackagesToSync)
+            else
             {
-                try
-                {
-                    // 3. Panggil API Service untuk membuat work package di OpenProject
-                    // PENTING: "gsbproject" adalah ID proyek Anda di OpenProject. Mohon verifikasi ini.
-                    var newOpenProjectId = await apiService.CreateWorkPackageAsync("gsbproject", wp);
-
-                    // 4. Jika berhasil, update data di database lokal
-                    wp.work_package_id = newOpenProjectId;
-                    wp.is_synced = true;
-                    wp.last_synced_at = DateTime.Now;
-
-                    await db.SaveChangesAsync();
-                    successCount++;
-                }
-                catch (Exception ex)
-                {
-                    // Jika terjadi error, catat di log (untuk sekarang kita tampilkan di debug output)
-                    System.Diagnostics.Debug.WriteLine($"Error syncing work package ID {wp.id}: {ex.Message}");
-                    errorCount++;
-                }
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Gagal mengambil work package dari OpenProject. Status: {response.StatusCode}. Error: {errorContent}");
             }
+        }
 
-            return $"Sinkronisasi selesai. Berhasil: {successCount}, Gagal: {errorCount}.";
+        /// <summary>
+        /// Membuat sebuah Work Package baru di OpenProject.
+        /// </summary>
+        public async Task<string> CreateWorkPackageAsync(string projectId, TWorkPackage workPackage)
+        {
+            var requestUrl = $"/api/v3/projects/{projectId}/work_packages";
+
+            var payload = new
+            {
+                subject = workPackage.work_package_name,
+                description = new
+                {
+                    format = "markdown",
+                    raw = workPackage.description
+                }
+            };
+
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(requestUrl, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                dynamic result = JsonConvert.DeserializeObject(responseBody);
+                return result.id.ToString();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Gagal membuat work package di OpenProject. Status: {response.StatusCode}. Error: {errorContent}");
+            }
         }
     }
 }
