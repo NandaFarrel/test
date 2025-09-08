@@ -1,8 +1,7 @@
-﻿// Utils/HangfireBootstrapper.cs
-using Hangfire; // DIUBAH: Menambahkan using yang hilang
+﻿using Hangfire;
 using Hangfire.Common;
 using Hangfire.SqlServer;
-using hangfire_template.Controllers; // DIUBAH: Menambahkan using yang hilang
+using hangfire_template.Controllers;
 using System;
 using System.Configuration;
 using System.Web.Hosting;
@@ -22,14 +21,9 @@ namespace hangfire_template.Utils
             lock (_lockObject)
             {
                 HostingEnvironment.RegisterObject(this);
-
                 string connectionString = ConfigurationManager.ConnectionStrings["HangfireDb"].ConnectionString;
-
-                GlobalConfiguration.Configuration
-                    .UseSqlServerStorage(connectionString);
-
+                GlobalConfiguration.Configuration.UseSqlServerStorage(connectionString);
                 var sqlStorage = new SqlServerStorage(connectionString);
-
                 startHangfireServer(sqlStorage);
             }
         }
@@ -55,21 +49,29 @@ namespace hangfire_template.Utils
                 TimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")
             };
 
-            // Memanggil kembali method-method asli Anda dari SyncTableINFORController
-            var conid_job = "proses_sync_data_part1";
-            recurJobM.RemoveIfExists(conid_job);
-                    recurJobM.AddOrUpdate(conid_job, Job.FromExpression<SyncTableINFORController>(x => x.ProsesAllSync_Part1()), "*/50 * * * *", recurJobOpt1);
+            // DIUBAH: Memanggil method-method yang benar dari SyncTableINFORControllerV2
+            recurJobM.AddOrUpdate("sync-cluster-1",
+                Job.FromExpression<SyncTableINFORController>(x => x.ProsesSync_Cluster_1()),
+                Cron.Daily(1), // Berjalan setiap hari jam 1 pagi
+                recurJobOpt1);
 
-            var conid_job2 = "proses_sync_data_part2";
-            recurJobM.RemoveIfExists(conid_job2);
-            recurJobM.AddOrUpdate(conid_job2, Job.FromExpression<SyncTableINFORController>(x => x.ProsesAllSync_Part2()), "*/50 * * * *", recurJobOpt1);
+            recurJobM.AddOrUpdate("sync-cluster-4",
+                Job.FromExpression<SyncTableINFORController>(x => x.ProsesSync_Cluster_4()),
+                Cron.Daily(2), // Berjalan setiap hari jam 2 pagi
+                recurJobOpt1);
 
-            var conid_job3 = "proses_sync_data_part3";
-            recurJobM.RemoveIfExists(conid_job3);
-            recurJobM.AddOrUpdate(conid_job3, Job.FromExpression<SyncTableINFORController>(x => x.ProsesAllSync_Part3()), "*/50 * * * *", recurJobOpt1);
+            recurJobM.AddOrUpdate("sync-cluster-6",
+                Job.FromExpression<SyncTableINFORController>(x => x.ProsesSync_Cluster_6()),
+                Cron.Daily(3), // Berjalan setiap hari jam 3 pagi
+                recurJobOpt1);
+
+            recurJobM.AddOrUpdate("upload-images-semarang",
+                Job.FromExpression<SyncTableINFORController>(x => x.ProsesUploadImagesPlantSemarang()),
+                Cron.Hourly(), // Berjalan setiap jam
+                recurJobOpt1);
 
 
-            // --- Job Baru untuk OpenProject ---
+            // --- Job untuk OpenProject (tidak diubah) ---
             RecurringJobOptions recurJobOptOpenProject = new RecurringJobOptions()
             {
                 QueueName = "2_openproject_sync",
@@ -77,13 +79,10 @@ namespace hangfire_template.Utils
             };
 
             var openProjectSyncJobId = "sync-db-to-openproject";
-            recurJobM.RemoveIfExists(openProjectSyncJobId);
-            recurJobM.AddOrUpdate(
-                openProjectSyncJobId,
+            recurJobM.AddOrUpdate(openProjectSyncJobId,
                 Job.FromExpression<OpenProjectSyncController>(x => x.SyncNewWorkPackages()),
-                "*/15 * * * *",
-                recurJobOptOpenProject
-            );
+                Cron.MinuteInterval(15),
+                recurJobOptOpenProject);
         }
 
         public void Stop()
