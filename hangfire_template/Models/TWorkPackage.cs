@@ -21,5 +21,6 @@ namespace hangfire_template.Models
         public string description { get; set; }
         public bool is_synced { get; set; }
         public DateTime? last_synced_at { get; set; }
+        public DateTime? created_at { get; set; } // <-- Add this property
     }
 }

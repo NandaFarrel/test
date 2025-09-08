@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
-using System.Data.Entity; // Pastikan using ini ada
+using System.Data.Entity; 
 
 namespace hangfire_template.Controllers
 {
@@ -47,7 +47,7 @@ namespace hangfire_template.Controllers
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error syncing work package ID {wp.id_work_package}: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"Error syncing work package ID {wp.id}: {ex.Message}");
                         errorCount++;
                     }
                 }
