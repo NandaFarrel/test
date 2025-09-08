@@ -5,9 +5,12 @@ namespace hangfire_template
 {
     public partial class GSDbContext : DbContext
     {
-        // Model-model untuk OpenProject
+        // Model-model untuk OpenProject & Trello Integration
         public virtual DbSet<TWorkPackage> TWorkPackages { get; set; }
         public virtual DbSet<TlkpUserMapping> TlkpUserMappings { get; set; }
+
+        // PASTIKAN BARIS INI ADA
+        public virtual DbSet<TSyncLog> TSyncLogs { get; set; }
 
         // Model-model Anda yang sudah ada
         public DbSet<TempListDataRejectPortal> TempListDataRejectPortal { get; set; }
@@ -27,11 +30,7 @@ namespace hangfire_template
         public DbSet<ListSPCTPAD_ttcibd0018888> ListSPCTPAD_ttcibd0018888 { get; set; }
         public DbSet<ListSPCTPAD_ttdpur2018888> ListSPCTPAD_ttdpur2018888 { get; set; }
 
-        // DIUBAH: Hanya ada satu constructor yang menunjuk ke Web.config.
-        // Ini akan membaca connection string dengan nama "HangfireDb".
         public GSDbContext() : base("name=HangfireDb") { }
-
-        // Constructor kedua yang rumit sudah dihapus untuk mencegah error.
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -43,20 +42,20 @@ namespace hangfire_template
            .HasPrecision(18, 3);
 
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
-               .Property(p => p.delivered_invoiced)
-               .HasPrecision(18, 3);
+                  .Property(p => p.delivered_invoiced)
+                  .HasPrecision(18, 3);
 
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
-               .Property(p => p.undelivered)
-               .HasPrecision(18, 3);
+                  .Property(p => p.undelivered)
+                  .HasPrecision(18, 3);
 
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
-               .Property(p => p.cancel_so)
-               .HasPrecision(18, 3);
+                  .Property(p => p.cancel_so)
+                  .HasPrecision(18, 3);
 
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
-               .Property(p => p.avg_value)
-               .HasPrecision(18, 3);
+                  .Property(p => p.avg_value)
+                  .HasPrecision(18, 3);
         }
     }
 
@@ -67,25 +66,21 @@ namespace hangfire_template
         public DbSet<TempListCustomer> TempListCustomer { get; set; }
         public DbSet<Table_SPT_STOCK> Table_SPT_STOCK { get; set; }
 
-        // DIUBAH: Constructor disederhanakan agar membaca dari Web.config.
-        // Pastikan Anda memiliki connection string bernama "TargetDbContext" di Web.config.
         public TargetDbContext() : base("name=TargetDbContext") { }
-
-        // Constructor kedua yang rumit sudah dihapus.
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             Database.SetInitializer<TargetDbContext>(null);
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<TempListBudget>()
-                 .Property(p => p.budget_amount)
-                 .HasPrecision(30, 7);
+                  .Property(p => p.budget_amount)
+                  .HasPrecision(30, 7);
             modelBuilder.Entity<TempListBudget>()
-                 .Property(p => p.order_amount)
-                 .HasPrecision(30, 7);
+                  .Property(p => p.order_amount)
+                  .HasPrecision(30, 7);
             modelBuilder.Entity<TempListDataRejectPortalDBSQL>()
-                 .Property(p => p.qoor)
-                 .HasPrecision(18, 3);
+                  .Property(p => p.qoor)
+                  .HasPrecision(18, 3);
         }
     }
 }

@@ -1,84 +1,166 @@
-﻿using hangfire_template.Models;
+﻿using hangfire_template;
+using hangfire_template.Models;
 using Newtonsoft.Json.Linq;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
-using Hangfire; // Pastikan using statement ini ada
 
 namespace hangfire_template.Controllers
 {
     public class WebhookController : Controller
     {
-        // Endpoint ini akan menerima notifikasi dari OpenProject.
-        // Alamat lengkapnya adalah: http://localhost:51000/Webhook/HandleEvent
+        // ===================================================================
+        // ENDPOINT UNTUK MENERIMA WEBHOOK DARI OPENPROJECT
+        // ===================================================================
         [HttpPost]
-        public async Task<ActionResult> HandleEvent()
+        [ActionName("openproject")] // URL akan menjadi /webhook/openproject
+        public async Task<ActionResult> OpenProjectEvents()
         {
-            // 1. Baca data JSON mentah dari body request yang dikirim oleh OpenProject.
             string requestBody;
             using (var reader = new StreamReader(Request.InputStream))
             {
                 requestBody = await reader.ReadToEndAsync();
             }
 
-            // 2. Lemparkan pemrosesan ke Hangfire agar berjalan di latar belakang.
-            //    Ini membuat endpoint bisa merespon dengan sangat cepat.
-            BackgroundJob.Enqueue<OpenProjectWebhookHandler>(x => x.ProcessWorkPackageEvent(requestBody));
-
-            // 3. Kirim respon "HTTP 200 OK" kembali ke OpenProject.
-            //    Ini memberitahu OpenProject bahwa notifikasinya sudah berhasil diterima.
-            return new HttpStatusCodeResult(200);
-        }
-    }
-
-    /// <summary>
-    /// Class ini berisi semua logika untuk memproses data dari webhook.
-    /// Hangfire akan memanggil method di dalam class ini.
-    /// </summary>
-    public class OpenProjectWebhookHandler
-    {
-        public void ProcessWorkPackageEvent(string jsonPayload)
-        {
-            var data = JObject.Parse(jsonPayload);
-
-            // Pastikan data yang masuk adalah tentang "work_package"
-            if (data["action"] != null && data["work_package"] != null)
+            try
             {
-                var workPackageData = data["work_package"];
+                JObject payload = JObject.Parse(requestBody);
+                var workPackage = payload["work_package"];
+                var action = payload["action"]?.ToString();
 
-                var openProjectId = workPackageData["id"].ToString();
-                var subject = workPackageData["subject"].ToString();
-                var description = workPackageData["description"]?["raw"]?.ToString() ?? "";
-
-                // Gunakan 'using' untuk memastikan koneksi database ditutup dengan benar
-                using (var db = new GSDbContext())
+                if (workPackage != null && !string.IsNullOrEmpty(action))
                 {
-                    // Cek apakah work package ini sudah ada di database kita
-                    var existingWp = db.TWorkPackages.FirstOrDefault(wp => wp.work_package_id == openProjectId);
+                    string wpId = workPackage["id"].ToString();
+                    string subject = workPackage["subject"]?.ToString();
+                    string description = workPackage["description"]?["raw"]?.ToString();
 
-                    if (existingWp == null) // Jika belum ada, buat data baru
+                    using (var db = new GSDbContext())
                     {
-                        var newWp = new TWorkPackage
+                        // DIUBAH: FirstOrDefault
+                        var existingWp = db.TWorkPackages.FirstOrDefault(w => w.work_package_id == wpId);
+
+                        if (existingWp == null) // Jika belum ada, buat baru
                         {
-                            work_package_id = openProjectId,
-                            work_package_name = subject,
-                            description = description,
-                            is_synced = true, // Langsung ditandai sudah sinkron
-                            created_at = System.DateTime.Now,
-                            last_synced_at = System.DateTime.Now
-                        };
-                        db.TWorkPackages.Add(newWp);
-                    }
-                    else // Jika sudah ada, perbarui datanya
-                    {
-                        existingWp.work_package_name = subject;
-                        existingWp.description = description;
-                        existingWp.last_synced_at = System.DateTime.Now;
-                    }
+                            var newWp = new TWorkPackage
+                            {
+                                work_package_id = wpId,
+                                work_package_name = subject,
+                                description = description,
+                                is_synced = true,
+                                last_synced_at = DateTime.Now
+                            };
+                            db.TWorkPackages.Add(newWp);
+                        }
+                        else // Jika sudah ada, update
+                        {
+                            existingWp.work_package_name = subject;
+                            existingWp.description = description;
+                            existingWp.last_synced_at = DateTime.Now;
+                        }
 
-                    db.SaveChanges();
+                        // Simpan log sinkronisasi
+                        db.TSyncLogs.Add(new TSyncLog
+                        {
+                            source_platform = "OpenProject",
+                            event_type = $"work_package:{action}",
+                            source_item_id = wpId,
+                            synced_at = DateTime.Now,
+                            details = "Successfully synced from webhook."
+                        });
+
+                        await db.SaveChangesAsync();
+                    }
                 }
+
+                return new HttpStatusCodeResult(200, "OK");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error processing OpenProject webhook: {ex.Message}");
+                return new HttpStatusCodeResult(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
+
+        // ===================================================================
+        // ENDPOINT UNTUK MENERIMA WEBHOOK DARI TRELLO
+        // ===================================================================
+
+        [AcceptVerbs(HttpVerbs.Head)]
+        [ActionName("trello")]
+        public ActionResult TrelloEventsHead()
+        {
+            return new HttpStatusCodeResult(200, "OK");
+        }
+
+        [HttpPost]
+        [ActionName("trello")] // URL akan menjadi /webhook/trello
+        public async Task<ActionResult> TrelloEvents()
+        {
+            string requestBody;
+            using (var reader = new StreamReader(Request.InputStream))
+            {
+                requestBody = await reader.ReadToEndAsync();
+            }
+
+            try
+            {
+                JObject payload = JObject.Parse(requestBody);
+                var action = payload["action"];
+                var eventType = action?["type"]?.ToString();
+                var card = action?["data"]?["card"];
+
+                if (card != null && !string.IsNullOrEmpty(eventType))
+                {
+                    string cardId = card["id"]?.ToString();
+                    string cardName = card["name"]?.ToString();
+                    string cardDesc = card["desc"]?.ToString();
+
+                    using (var db = new GSDbContext())
+                    {
+                        // DIUBAH: FirstOrDefault
+                        var existingWp = db.TWorkPackages.FirstOrDefault(w => w.trello_card_id == cardId);
+
+                        if (eventType == "createCard" && existingWp == null)
+                        {
+                            var newWp = new TWorkPackage
+                            {
+                                trello_card_id = cardId,
+                                work_package_name = cardName,
+                                description = cardDesc,
+                                is_synced = true,
+                                last_synced_at = DateTime.Now
+                            };
+                            db.TWorkPackages.Add(newWp);
+                        }
+                        else if (eventType == "updateCard" && existingWp != null)
+                        {
+                            existingWp.work_package_name = cardName;
+                            existingWp.description = cardDesc;
+                            existingWp.last_synced_at = DateTime.Now;
+                        }
+
+                        // Simpan log sinkronisasi
+                        db.TSyncLogs.Add(new TSyncLog
+                        {
+                            source_platform = "Trello",
+                            event_type = eventType,
+                            source_item_id = cardId,
+                            synced_at = DateTime.Now,
+                            details = "Successfully synced from webhook."
+                        });
+
+                        await db.SaveChangesAsync();
+                    }
+                }
+
+                return new HttpStatusCodeResult(200, "OK");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error processing Trello webhook: {ex.Message}");
+                return new HttpStatusCodeResult(500, $"Internal Server Error: {ex.Message}");
             }
         }
     }

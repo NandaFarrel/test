@@ -1164,6 +1164,7 @@
     <Compile Include="Models\TempListCustomer.cs" />
     <Compile Include="Models\TempListBudget.cs" />
     <Compile Include="Models\TlkpUserMapping.cs" />
+    <Compile Include="Models\TSyncLog.cs" />
     <Compile Include="Models\TWorkPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\OpenProjectApiService.cs" />
