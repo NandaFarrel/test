@@ -10,7 +10,7 @@ namespace hangfire_template.Models
         // DIUBAH: Menambahkan atribut [Column] untuk memetakan ke nama kolom yang benar
         [Key]
         [Column("id_work_package")]
-        public int id { get; set; }
+        public int id_work_package { get; set; }
 
         [StringLength(255)]
         public string work_package_name { get; set; }

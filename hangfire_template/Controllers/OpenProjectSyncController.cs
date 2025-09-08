@@ -47,7 +47,7 @@ namespace hangfire_template.Controllers
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error syncing work package ID {wp.id}: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"Error syncing work package ID {wp.id_work_package}: {ex.Message}");
                         errorCount++;
                     }
                 }

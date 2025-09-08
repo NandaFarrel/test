@@ -49,7 +49,7 @@ namespace hangfire_template.Utils
                 TimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")
             };
 
-            // DIUBAH: Memanggil method-method yang benar dari SyncTableINFORControllerV2
+            // DIUBAH: Memanggil method-method yang benar dari SyncTableINFORController
             recurJobM.AddOrUpdate("sync-cluster-1",
                 Job.FromExpression<SyncTableINFORController>(x => x.ProsesSync_Cluster_1()),
                 Cron.Daily(1), // Berjalan setiap hari jam 1 pagi
