@@ -1,9 +1,11 @@
-﻿using hangfire_template;
-using hangfire_template.Models;
+﻿using hangfire_template.Models;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 
@@ -24,6 +26,17 @@ namespace hangfire_template.Controllers
                 requestBody = await reader.ReadToEndAsync();
             }
 
+            // --- AWAL VALIDASI SIGNATURE ---
+            var secret = ConfigurationManager.AppSettings["OpenProjectWebhookSecret"];
+            var signatureHeader = Request.Headers["X-OpenProject-Signature"];
+
+            if (string.IsNullOrEmpty(signatureHeader) || !IsValidSignature(signatureHeader, requestBody, secret))
+            {
+                // Jika signature tidak valid atau tidak ada, tolak permintaan
+                return new HttpStatusCodeResult(401, "Unauthorized");
+            }
+            // --- AKHIR VALIDASI SIGNATURE ---
+
             try
             {
                 JObject payload = JObject.Parse(requestBody);
@@ -38,10 +51,9 @@ namespace hangfire_template.Controllers
 
                     using (var db = new GSDbContext())
                     {
-                        // DIUBAH: FirstOrDefault
                         var existingWp = db.TWorkPackages.FirstOrDefault(w => w.work_package_id == wpId);
 
-                        if (existingWp == null) // Jika belum ada, buat baru
+                        if (existingWp == null)
                         {
                             var newWp = new TWorkPackage
                             {
@@ -53,14 +65,13 @@ namespace hangfire_template.Controllers
                             };
                             db.TWorkPackages.Add(newWp);
                         }
-                        else // Jika sudah ada, update
+                        else
                         {
                             existingWp.work_package_name = subject;
                             existingWp.description = description;
                             existingWp.last_synced_at = DateTime.Now;
                         }
 
-                        // Simpan log sinkronisasi
                         db.TSyncLogs.Add(new TSyncLog
                         {
                             source_platform = "OpenProject",
@@ -82,6 +93,30 @@ namespace hangfire_template.Controllers
                 return new HttpStatusCodeResult(500, $"Internal Server Error: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Memvalidasi signature HMAC-SHA256 dari OpenProject.
+        /// </summary>
+        private bool IsValidSignature(string signatureHeader, string payload, string secret)
+        {
+            if (!signatureHeader.StartsWith("sha256="))
+            {
+                return false;
+            }
+
+            var signature = signatureHeader.Substring("sha256=".Length);
+            var secretBytes = Encoding.UTF8.GetBytes(secret);
+            var payloadBytes = Encoding.UTF8.GetBytes(payload);
+
+            using (var hmac = new HMACSHA256(secretBytes))
+            {
+                var hash = hmac.ComputeHash(payloadBytes);
+                var hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+                return hashString.Equals(signature, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
 
         // ===================================================================
         // ENDPOINT UNTUK MENERIMA WEBHOOK DARI TRELLO
@@ -119,7 +154,6 @@ namespace hangfire_template.Controllers
 
                     using (var db = new GSDbContext())
                     {
-                        // DIUBAH: FirstOrDefault
                         var existingWp = db.TWorkPackages.FirstOrDefault(w => w.trello_card_id == cardId);
 
                         if (eventType == "createCard" && existingWp == null)
@@ -141,7 +175,6 @@ namespace hangfire_template.Controllers
                             existingWp.last_synced_at = DateTime.Now;
                         }
 
-                        // Simpan log sinkronisasi
                         db.TSyncLogs.Add(new TSyncLog
                         {
                             source_platform = "Trello",

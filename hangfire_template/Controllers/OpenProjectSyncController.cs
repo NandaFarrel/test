@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
-using System.Data.Entity; 
+using System.Data.Entity;
 
 namespace hangfire_template.Controllers
 {
@@ -13,15 +13,13 @@ namespace hangfire_template.Controllers
         [HttpPost]
         public async Task<string> SyncNewWorkPackages()
         {
-            // Menggunakan 'using' adalah praktik terbaik untuk memastikan koneksi ditutup
             using (var db = new GSDbContext())
             {
                 var apiService = new OpenProjectApiService();
                 int successCount = 0;
                 int errorCount = 0;
 
-                // Ini adalah baris yang menyebabkan error (line 25)
-                // Kita akan mencoba query yang lebih eksplisit
+                // Query ini sekarang akan berjalan dengan benar setelah model diperbaiki
                 var workPackagesToSync = db.TWorkPackages
                                            .Where(wp => wp.is_synced == false)
                                            .ToList();
@@ -38,6 +36,7 @@ namespace hangfire_template.Controllers
                         // Pastikan "gsbproject" adalah Project Identifier yang benar
                         var newOpenProjectId = await apiService.CreateWorkPackageAsync("gsbproject", wp);
 
+                        // Memperbarui record di database lokal
                         wp.work_package_id = newOpenProjectId;
                         wp.is_synced = true;
                         wp.last_synced_at = DateTime.Now;
