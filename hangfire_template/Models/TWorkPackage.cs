@@ -1,4 +1,6 @@
-﻿using System;
+﻿// File: TWorkPackage.cs
+
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -8,16 +10,13 @@ namespace hangfire_template.Models
     public class TWorkPackage
     {
         [Key]
-        [Column("id_work_package")] // Anotasi untuk memetakan ke kolom yang benar di DB
+        [Column("id_work_package")]
         public int id { get; set; }
 
-        // Kolom untuk ID dari OpenProject
-        public string work_package_id { get; set; }
+        // PERBAIKAN: Ubah dari string menjadi int agar cocok dengan database
+        public int work_package_id { get; set; }
 
-        // Kolom untuk ID dari Trello
         public string trello_card_id { get; set; }
-
-        // Kolom umum
         public string work_package_name { get; set; }
         public string description { get; set; }
         public bool is_synced { get; set; }

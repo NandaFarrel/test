@@ -19,10 +19,9 @@ namespace hangfire_template.Controllers
                 int successCount = 0;
                 int errorCount = 0;
 
-                // Query ini sekarang akan berjalan dengan benar setelah model diperbaiki
                 var workPackagesToSync = db.TWorkPackages
-                                           .Where(wp => wp.is_synced == false)
-                                           .ToList();
+                                            .Where(wp => wp.is_synced == false)
+                                            .ToList();
 
                 if (!workPackagesToSync.Any())
                 {
@@ -34,15 +33,25 @@ namespace hangfire_template.Controllers
                     try
                     {
                         // Pastikan "gsbproject" adalah Project Identifier yang benar
-                        var newOpenProjectId = await apiService.CreateWorkPackageAsync("gsbproject", wp);
+                        var newOpenProjectIdString = await apiService.CreateWorkPackageAsync("gsbproject", wp);
 
-                        // Memperbarui record di database lokal
-                        wp.work_package_id = newOpenProjectId;
-                        wp.is_synced = true;
-                        wp.last_synced_at = DateTime.Now;
+                        // PERBAIKAN: Konversi hasil string dari API menjadi integer sebelum disimpan
+                        if (int.TryParse(newOpenProjectIdString, out int newOpenProjectId))
+                        {
+                            // Memperbarui record di database lokal
+                            wp.work_package_id = newOpenProjectId;
+                            wp.is_synced = true;
+                            wp.last_synced_at = DateTime.Now;
 
-                        db.Entry(wp).State = EntityState.Modified;
-                        successCount++;
+                            db.Entry(wp).State = EntityState.Modified;
+                            successCount++;
+                        }
+                        else
+                        {
+                            // Tangani kasus jika ID yang diterima bukan angka
+                            System.Diagnostics.Debug.WriteLine($"Error: API returned a non-integer ID '{newOpenProjectIdString}' for local work package ID {wp.id}.");
+                            errorCount++;
+                        }
                     }
                     catch (Exception ex)
                     {

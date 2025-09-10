@@ -30,7 +30,10 @@ namespace hangfire_template.Controllers
                 // 3. Looping setiap work package dari OpenProject
                 foreach (var item in openProjectWorkPackages)
                 {
-                    string wpId = item["id"].ToString();
+                    // PERBAIKAN: Baca 'id' sebagai integer
+                    int wpId = item["id"].Value<int>();
+
+                    // PERBAIKAN: Bandingkan integer dengan integer
                     var existingWp = localWorkPackages.FirstOrDefault(w => w.work_package_id == wpId);
 
                     if (existingWp == null)
@@ -38,7 +41,7 @@ namespace hangfire_template.Controllers
                         // 4a. Jika tidak ada, buat entri baru
                         var newWp = new TWorkPackage
                         {
-                            // DIUBAH: Menggunakan nama properti yang benar "work_package_id"
+                            // PERBAIKAN: Simpan 'id' sebagai integer
                             work_package_id = wpId,
                             work_package_name = item["subject"]?.ToString(),
                             description = item["description"]?["raw"]?.ToString(),
