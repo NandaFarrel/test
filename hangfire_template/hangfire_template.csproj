@@ -1150,6 +1150,15 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="GSDBContext.cs" />
+    <Compile Include="Migrations\202509110236345_InitialModel.cs" />
+    <Compile Include="Migrations\202509110236345_InitialModel.Designer.cs">
+      <DependentUpon>202509110236345_InitialModel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202509110402196_AlterWorkPackageTableForRelations.cs" />
+    <Compile Include="Migrations\202509110402196_AlterWorkPackageTableForRelations.Designer.cs">
+      <DependentUpon>202509110402196_AlterWorkPackageTableForRelations.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Master_ttfbgc1208888.cs" />
     <Compile Include="Models\Master_ttfbgc1608888.cs" />
     <Compile Include="Models\Master_ttdpur2008888.cs" />
@@ -1157,6 +1166,9 @@
     <Compile Include="Models\Master_ttdpur4028888.cs" />
     <Compile Include="Models\Master_ttdpur4008888.cs" />
     <Compile Include="Models\Master_ttfbgc4008888.cs" />
+    <Compile Include="Models\TChecklist.cs" />
+    <Compile Include="Models\TChecklistItem.cs" />
+    <Compile Include="Models\TComment.cs" />
     <Compile Include="Models\TempListSPCTPAD.cs" />
     <Compile Include="Models\TempListCapacityPlanning.cs" />
     <Compile Include="Models\TempListSalesOrder.cs" />
@@ -1164,15 +1176,27 @@
     <Compile Include="Models\TempListCustomer.cs" />
     <Compile Include="Models\TempListBudget.cs" />
     <Compile Include="Models\TlkpUserMapping.cs" />
+    <Compile Include="Models\TProject.cs" />
+    <Compile Include="Models\TStatus.cs" />
     <Compile Include="Models\TSyncLog.cs" />
+    <Compile Include="Models\TUser.cs" />
     <Compile Include="Models\TWorkPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\OpenProjectApiService.cs" />
+    <Compile Include="Services\OpenProjectSyncJob.cs" />
     <Compile Include="Utils\ApplicationPreloadHangfireSPCTPAD.cs" />
     <Compile Include="Utils\HangfireBootstrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Manage\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\202509110236345_InitialModel.resx">
+      <DependentUpon>202509110236345_InitialModel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202509110402196_AlterWorkPackageTableForRelations.resx">
+      <DependentUpon>202509110402196_AlterWorkPackageTableForRelations.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

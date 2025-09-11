@@ -19,7 +19,9 @@ namespace hangfire_template.Controllers
                 int successCount = 0;
                 int errorCount = 0;
 
-                var workPackagesToSync = db.TWorkPackages
+                // Properti is_synced sudah dihapus, logika ini perlu diubah atau dihapus
+                // Untuk sementara, kita komentari agar tidak error
+                /* var workPackagesToSync = db.TWorkPackages
                                             .Where(wp => wp.is_synced == false)
                                             .ToList();
 
@@ -32,26 +34,14 @@ namespace hangfire_template.Controllers
                 {
                     try
                     {
-                        // Pastikan "gsbproject" adalah Project Identifier yang benar
-                        var newOpenProjectIdString = await apiService.CreateWorkPackageAsync("gsbproject", wp);
+                        var newOpenProjectId = await apiService.CreateWorkPackageAsync("gsbproject", wp);
+                        
+                        wp.OpenProjectWorkPackageId = newOpenProjectId;
+                        wp.is_synced = true;
+                        wp.LastSyncedAt = DateTime.Now;
 
-                        // PERBAIKAN: Konversi hasil string dari API menjadi integer sebelum disimpan
-                        if (int.TryParse(newOpenProjectIdString, out int newOpenProjectId))
-                        {
-                            // Memperbarui record di database lokal
-                            wp.work_package_id = newOpenProjectId;
-                            wp.is_synced = true;
-                            wp.last_synced_at = DateTime.Now;
-
-                            db.Entry(wp).State = EntityState.Modified;
-                            successCount++;
-                        }
-                        else
-                        {
-                            // Tangani kasus jika ID yang diterima bukan angka
-                            System.Diagnostics.Debug.WriteLine($"Error: API returned a non-integer ID '{newOpenProjectIdString}' for local work package ID {wp.id}.");
-                            errorCount++;
-                        }
+                        db.Entry(wp).State = EntityState.Modified;
+                        successCount++;
                     }
                     catch (Exception ex)
                     {
@@ -59,9 +49,8 @@ namespace hangfire_template.Controllers
                         errorCount++;
                     }
                 }
-
+                */
                 await db.SaveChangesAsync();
-
                 return $"Sinkronisasi selesai. Berhasil: {successCount}, Gagal: {errorCount}.";
             }
         }

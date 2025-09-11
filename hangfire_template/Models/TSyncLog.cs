@@ -8,12 +8,43 @@ namespace hangfire_template.Models
     public class TSyncLog
     {
         [Key]
-        public int log_id { get; set; }
+        [Column("id_sync_log")]
+        public int IdSyncLog { get; set; }
 
-        public string source_platform { get; set; } // "Trello" atau "OpenProject"
-        public string event_type { get; set; } // Contoh: "cardCreated", "workPackageUpdated"
-        public string source_item_id { get; set; } // ID dari Trello Card atau OP Work Package
-        public DateTime synced_at { get; set; }
-        public string details { get; set; } // Untuk menyimpan payload atau detail error
+        [Column("source")]
+        public string Source { get; set; }
+
+        [Column("email")]
+        public string Email { get; set; }
+
+        [Column("card_id")]
+        public string CardId { get; set; }
+
+        [Column("checklist_id")]
+        public string ChecklistId { get; set; }
+
+        [Column("checklist_item_id")]
+        public string ChecklistItemId { get; set; }
+
+        [Column("time_entry_id")]
+        public string TimeEntryId { get; set; }
+
+        [Column("work_package_id")]
+        public string WorkPackageId { get; set; }
+
+        [Column("activity_id")]
+        public string ActivityId { get; set; }
+
+        [Column("synced_at")]
+        public DateTime? SyncedAt { get; set; }
+
+        [Column("direction")]
+        public string Direction { get; set; }
+
+        [Column("sync_status")]
+        public string SyncStatus { get; set; }
+
+        [Column("error_message")]
+        public string ErrorMessage { get; set; }
     }
 }

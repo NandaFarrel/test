@@ -1,26 +1,30 @@
-﻿using hangfire_template.Controllers;
-using Hangfire;
-using Hangfire.SqlServer;
+﻿using Hangfire;
 using Microsoft.Owin;
 using Owin;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using hangfire_template.Services;
 
+[assembly: OwinStartup(typeof(hangfire_template.Startup))]
 
-[assembly: OwinStartup(typeof(hangfire_template.App_Start.Startup))]
-
-namespace hangfire_template.App_Start
+namespace hangfire_template
 {
     public class Startup
     {
-        [Obsolete]
         public void Configuration(IAppBuilder app)
         {
-            //app.MapSignalR();       
-            //app.UseHangfireServer();
+            // PERBAIKAN: Menggunakan nama connection string yang benar dari Web.config
+            GlobalConfiguration.Configuration.UseSqlServerStorage("TargetDbContext");
+
+            // Aktifkan Dashboard Hangfire
             app.UseHangfireDashboard();
+
+            // Aktifkan Server Hangfire untuk memproses background jobs
+            app.UseHangfireServer();
+
+            // Daftarkan dan jadwalkan Recurring Job Anda
+            RecurringJob.AddOrUpdate<OpenProjectSyncJob>(
+                "sync-updates-to-openproject",
+                job => job.SyncUpdatesToOpenProject(),
+                Cron.Minutely());
         }
     }
 }

@@ -1,6 +1,5 @@
-﻿// File: TWorkPackage.cs
-
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -11,16 +10,45 @@ namespace hangfire_template.Models
     {
         [Key]
         [Column("id_work_package")]
-        public int id { get; set; }
+        public int Id { get; set; }
 
-        // PERBAIKAN: Ubah dari string menjadi int agar cocok dengan database
-        public int work_package_id { get; set; }
+        // --- ID dari Sistem Eksternal ---
 
-        public string trello_card_id { get; set; }
-        public string work_package_name { get; set; }
-        public string description { get; set; }
-        public bool is_synced { get; set; }
-        public DateTime? last_synced_at { get; set; }
-        public DateTime? created_at { get; set; }
+        // PERBAIKAN: Menggunakan IndexAttribute dengan nama yang lebih spesifik
+        [Index("IX_OPWorkPackageId", IsUnique = true)]
+        [StringLength(450)] // Menentukan panjang untuk kunci unik
+        public string OpenProjectWorkPackageId { get; set; }
+
+        // PERBAIKAN: Menggunakan IndexAttribute dengan nama yang lebih spesifik
+        [Index("IX_TrelloCardId", IsUnique = true)]
+        [StringLength(450)] // Menentukan panjang untuk kunci unik
+        public string TrelloCardId { get; set; }
+
+        // --- Relasi ke Tabel Lain (Foreign Keys) ---
+        public int? ProjectId { get; set; }
+        public int? StatusId { get; set; }
+        public int? AssigneeId { get; set; }
+
+        // --- Properti Utama ---
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public DateTime? DueDate { get; set; }
+
+        // --- Relasi Navigasi (untuk Entity Framework) ---
+        [ForeignKey("ProjectId")]
+        public virtual TProject Project { get; set; }
+        [ForeignKey("StatusId")]
+        public virtual TStatus Status { get; set; }
+        [ForeignKey("AssigneeId")]
+        public virtual TUser Assignee { get; set; }
+
+        public virtual ICollection<TComment> Comments { get; set; }
+        public virtual ICollection<TChecklist> Checklists { get; set; }
+
+        // --- Properti untuk Sinkronisasi ---
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime LastSyncedAt { get; set; }
+        public bool NeedsOpSync { get; set; }
+        public bool NeedsTrelloSync { get; set; }
     }
 }

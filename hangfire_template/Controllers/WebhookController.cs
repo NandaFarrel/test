@@ -17,68 +17,44 @@ namespace hangfire_template.Controllers
         public async Task<HttpResponseMessage> OpenProjectEvents()
         {
             string requestBody = await Request.Content.ReadAsStringAsync();
-
             try
             {
                 JObject payload = JObject.Parse(requestBody);
-                var workPackage = payload["work_package"];
-                var action = payload["action"]?.ToString();
+                var workPackageData = payload["work_package"];
 
-                if (workPackage != null && !string.IsNullOrEmpty(action))
+                if (workPackageData != null)
                 {
-                    int wpId = workPackage["id"].Value<int>();
-                    string subject = workPackage["subject"]?.ToString();
-                    string description = workPackage["description"]?["raw"]?.ToString();
+                    string opWorkPackageId = workPackageData["id"].ToString();
 
                     using (var db = new GSDbContext())
                     {
-                        var existingWp = db.TWorkPackages.FirstOrDefault(w => w.work_package_id == wpId);
+                        var existingWp = db.TWorkPackages.FirstOrDefault(w => w.OpenProjectWorkPackageId == opWorkPackageId);
 
                         if (existingWp == null)
                         {
-                            var newWp = new TWorkPackage
-                            {
-                                work_package_id = wpId,
-                                work_package_name = subject,
-                                description = description,
-                                is_synced = true,
-                                last_synced_at = DateTime.Now,
-                                // === PERBAIKAN FINAL DI SINI ===
-                                created_at = DateTime.Now
-                            };
-                            db.TWorkPackages.Add(newWp);
-                        }
-                        else
-                        {
-                            existingWp.work_package_name = subject;
-                            existingWp.description = description;
-                            existingWp.last_synced_at = DateTime.Now;
+                            existingWp = new TWorkPackage { CreatedAt = DateTime.Now };
+                            db.TWorkPackages.Add(existingWp);
                         }
 
-                        db.TSyncLogs.Add(new TSyncLog
-                        {
-                            source_platform = "OpenProject",
-                            event_type = action,
-                            source_item_id = wpId.ToString(),
-                            synced_at = DateTime.Now,
-                            details = "Successfully synced from webhook."
-                        });
+                        // Update properti menggunakan nama baru dari model TWorkPackage.cs
+                        existingWp.OpenProjectWorkPackageId = opWorkPackageId;
+                        existingWp.Name = workPackageData["subject"]?.ToString();
+                        existingWp.Description = workPackageData["description"]?["raw"]?.ToString();
+                        existingWp.LastSyncedAt = DateTime.Now;
+
+                        // Di masa depan, Anda akan mengisi relasi di sini
+                        // contoh: existingWp.ProjectId = ...
+                        // contoh: existingWp.StatusId = ...
 
                         await db.SaveChangesAsync();
                     }
                 }
-
                 return Request.CreateResponse(HttpStatusCode.OK, "OK");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error processing OpenProject webhook: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-                    return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Internal Server Error: {ex.InnerException.Message}");
-                }
-                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Internal Server Error: {ex.Message}");
+                // ... (Error handling)
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, $"Internal Server Error: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
     }

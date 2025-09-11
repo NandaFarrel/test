@@ -3,16 +3,24 @@ using System.Data.Entity;
 
 namespace hangfire_template
 {
+    // Konteks ini berisi tabel-tabel lama dan tabel sinkronisasi baru
     public partial class GSDbContext : DbContext
     {
-        // Model-model untuk OpenProject & Trello Integration
+        // --- Model-model untuk OpenProject & Trello Integration ---
         public virtual DbSet<TWorkPackage> TWorkPackages { get; set; }
         public virtual DbSet<TlkpUserMapping> TlkpUserMappings { get; set; }
-
-        // PASTIKAN BARIS INI ADA
         public virtual DbSet<TSyncLog> TSyncLogs { get; set; }
 
-        // Model-model Anda yang sudah ada
+        // --- PENAMBAHAN DbSet UNTUK TABEL SINKRONISASI BARU ---
+        public virtual DbSet<TProject> TProjects { get; set; }
+        public virtual DbSet<TStatus> TStatuses { get; set; }
+        public virtual DbSet<TUser> TUsers { get; set; }
+        public virtual DbSet<TComment> TComments { get; set; }
+        public virtual DbSet<TChecklist> TChecklists { get; set; }
+        public virtual DbSet<TChecklistItem> TChecklistItems { get; set; }
+        // --------------------------------------------------------
+
+        // --- Model-model Anda yang sudah ada ---
         public DbSet<TempListDataRejectPortal> TempListDataRejectPortal { get; set; }
         public DbSet<Master_ttfbgc4008888> Master_ttfbgc4008888 { get; set; }
         public DbSet<Master_ttfbgc1608888> Master_ttfbgc1608888 { get; set; }
@@ -30,6 +38,7 @@ namespace hangfire_template
         public DbSet<ListSPCTPAD_ttcibd0018888> ListSPCTPAD_ttcibd0018888 { get; set; }
         public DbSet<ListSPCTPAD_ttdpur2018888> ListSPCTPAD_ttdpur2018888 { get; set; }
 
+        // Menggunakan connection string "HangfireDb" dari Web.config
         public GSDbContext() : base("name=HangfireDb") { }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -37,28 +46,30 @@ namespace hangfire_template
             Database.SetInitializer<GSDbContext>(null);
             base.OnModelCreating(modelBuilder);
 
+            // Konfigurasi presisi untuk model-model yang sudah ada
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
            .Property(p => p.delivered_uninvoice)
            .HasPrecision(18, 3);
 
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
-                  .Property(p => p.delivered_invoiced)
-                  .HasPrecision(18, 3);
+                    .Property(p => p.delivered_invoiced)
+                    .HasPrecision(18, 3);
 
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
-                  .Property(p => p.undelivered)
-                  .HasPrecision(18, 3);
+                    .Property(p => p.undelivered)
+                    .HasPrecision(18, 3);
 
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
-                  .Property(p => p.cancel_so)
-                  .HasPrecision(18, 3);
+                    .Property(p => p.cancel_so)
+                    .HasPrecision(18, 3);
 
             modelBuilder.Entity<TempDashboardLineChartSalesOrder>()
-                  .Property(p => p.avg_value)
-                  .HasPrecision(18, 3);
+                    .Property(p => p.avg_value)
+                    .HasPrecision(18, 3);
         }
     }
 
+    // Konteks kedua Anda dibiarkan tidak berubah
     public partial class TargetDbContext : DbContext
     {
         public DbSet<TempListDataRejectPortalDBSQL> TempListDataRejectPortalDBSQL { get; set; }
@@ -73,14 +84,14 @@ namespace hangfire_template
             Database.SetInitializer<TargetDbContext>(null);
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<TempListBudget>()
-                  .Property(p => p.budget_amount)
-                  .HasPrecision(30, 7);
+                    .Property(p => p.budget_amount)
+                    .HasPrecision(30, 7);
             modelBuilder.Entity<TempListBudget>()
-                  .Property(p => p.order_amount)
-                  .HasPrecision(30, 7);
+                    .Property(p => p.order_amount)
+                    .HasPrecision(30, 7);
             modelBuilder.Entity<TempListDataRejectPortalDBSQL>()
-                  .Property(p => p.qoor)
-                  .HasPrecision(18, 3);
+                    .Property(p => p.qoor)
+                    .HasPrecision(18, 3);
         }
     }
 }
