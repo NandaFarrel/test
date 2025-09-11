@@ -11,20 +11,22 @@ namespace hangfire_template
     {
         public void Configuration(IAppBuilder app)
         {
-            // PERBAIKAN: Menggunakan nama connection string yang benar dari Web.config
             GlobalConfiguration.Configuration.UseSqlServerStorage("TargetDbContext");
 
-            // Aktifkan Dashboard Hangfire
             app.UseHangfireDashboard();
-
-            // Aktifkan Server Hangfire untuk memproses background jobs
             app.UseHangfireServer();
 
-            // Daftarkan dan jadwalkan Recurring Job Anda
+            // JOB LAMA: Mengirim update DARI Database KE OpenProject
             RecurringJob.AddOrUpdate<OpenProjectSyncJob>(
                 "sync-updates-to-openproject",
                 job => job.SyncUpdatesToOpenProject(),
-                Cron.Minutely());
+                Cron.Minutely()); // Berjalan setiap menit
+
+            // JOB BARU: Mengambil data DARI OpenProject KE Database
+            RecurringJob.AddOrUpdate<OpenProjectFetchJob>(
+                "fetch-data-from-openproject",
+                job => job.FetchAllWorkPackages("demo-project"), // Ganti "demo-project" dengan ID proyek Anda
+                "*/5 * * * *"); // Berjalan setiap 5 menit
         }
     }
 }

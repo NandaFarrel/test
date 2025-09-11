@@ -1183,6 +1183,7 @@
     <Compile Include="Models\TWorkPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\OpenProjectApiService.cs" />
+    <Compile Include="Services\OpenProjectFetchJob.cs" />
     <Compile Include="Services\OpenProjectSyncJob.cs" />
     <Compile Include="Utils\ApplicationPreloadHangfireSPCTPAD.cs" />
     <Compile Include="Utils\HangfireBootstrapper.cs" />
