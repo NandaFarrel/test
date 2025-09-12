@@ -12,10 +12,6 @@ namespace hangfire_template.Utils
             //fs.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " started ");
             //fs.Dispose();
 
-            HangfireBootstrapper.Instance.Stop();
-
-            HangfireBootstrapper.Instance.Start();
-
         }
     }
 }

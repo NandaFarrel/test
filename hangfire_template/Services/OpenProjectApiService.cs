@@ -34,7 +34,6 @@ namespace hangfire_template.Services
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        // FUNGSI YANG HILANG (DITAMBAHKAN KEMBALI)
         public async Task<List<JObject>> GetAllWorkPackagesAsync(string projectId)
         {
             var allWorkPackages = new List<JObject>();
@@ -56,32 +55,6 @@ namespace hangfire_template.Services
             return allWorkPackages;
         }
 
-        // FUNGSI YANG HILANG (DITAMBAHKAN KEMBALI)
-        public async Task<string> CreateWorkPackageAsync(string projectId, TWorkPackage wp)
-        {
-            var url = $"/api/v3/projects/{projectId}/work_packages";
-            var payload = new
-            {
-                // Menggunakan properti baru "Name" dan "Description"
-                subject = wp.Name,
-                description = new { raw = wp.Description },
-                _links = new
-                {
-                    type = new { href = "/api/v3/types/1" } // Asumsi tipe "Task"
-                }
-            };
-
-            var jsonPayload = JsonConvert.SerializeObject(payload);
-            var httpContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync(url, httpContent);
-            response.EnsureSuccessStatusCode();
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var createdWp = JObject.Parse(responseContent);
-            return createdWp["id"].ToString();
-        }
-
         public async Task UpdateWorkPackageAsync(int workPackageId, TWorkPackage wp)
         {
             var existingWpResponse = await _httpClient.GetAsync($"/api/v3/work_packages/{workPackageId}");
@@ -97,7 +70,6 @@ namespace hangfire_template.Services
             var payload = new JObject
             {
                 ["lockVersion"] = lockVersion,
-                // Menggunakan properti baru "Name" dan "Description"
                 ["subject"] = wp.Name,
                 ["description"] = new JObject
                 {
@@ -116,6 +88,28 @@ namespace hangfire_template.Services
                 var errorContent = await response.Content.ReadAsStringAsync();
                 throw new Exception($"Gagal update OpenProject. Status: {response.StatusCode}. Response: {errorContent}");
             }
+        }
+
+        public async Task<List<JObject>> GetTimeEntriesForUserAsync(string userId)
+        {
+            var allTimeEntries = new List<JObject>();
+            var url = $"/api/v3/time_entries?filters=[{{\"user_id\":{{\"operator\":\"=\",\"values\":[\"{userId}\"]}}}}]";
+
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            var result = JObject.Parse(content);
+            var elements = result["_embedded"]?["elements"] as JArray;
+
+            if (elements != null)
+            {
+                foreach (var item in elements)
+                {
+                    allTimeEntries.Add(item as JObject);
+                }
+            }
+            return allTimeEntries;
         }
     }
 }

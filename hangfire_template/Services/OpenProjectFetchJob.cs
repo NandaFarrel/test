@@ -9,13 +9,10 @@ namespace hangfire_template.Services
 {
     public class OpenProjectFetchJob
     {
-        // Metode ini akan dipanggil oleh Hangfire
         public async Task FetchAllWorkPackages(string projectId)
         {
             Console.WriteLine($"Memulai job FetchAllWorkPackages untuk proyek: {projectId}");
             var apiService = new OpenProjectApiService();
-
-            // 1. Ambil semua work package dari API OpenProject
             var openProjectWorkPackages = await apiService.GetAllWorkPackagesAsync(projectId);
 
             using (var db = new GSDbContext())
@@ -24,20 +21,19 @@ namespace hangfire_template.Services
                 {
                     try
                     {
-                        // 2. Ekstrak semua data dari JSON
                         string opWorkPackageId = wpData["id"].ToString();
+
                         var projectData = wpData["_embedded"]?["project"];
                         var statusData = wpData["_embedded"]?["status"];
                         var authorData = wpData["_embedded"]?["author"];
                         var assigneeData = wpData["_embedded"]?["assignee"];
 
-                        // 3. Cari atau Buat (Get or Create) entitas yang berhubungan
+                        // PERBAIKAN: Fungsi helper di bawah sekarang akan langsung menyimpan ke DB jika ada data baru
                         var project = await GetOrCreateProject(db, projectData);
                         var status = await GetOrCreateStatus(db, statusData);
                         var author = await GetOrCreateUser(db, authorData);
                         var assignee = await GetOrCreateUser(db, assigneeData);
 
-                        // 4. Cari atau Buat Work Package utama
                         var workPackage = await db.TWorkPackages
                             .FirstOrDefaultAsync(wp => wp.OpenProjectWorkPackageId == opWorkPackageId);
 
@@ -47,7 +43,6 @@ namespace hangfire_template.Services
                             db.TWorkPackages.Add(workPackage);
                         }
 
-                        // 5. Update properti dan hubungkan dengan Foreign Keys
                         workPackage.OpenProjectWorkPackageId = opWorkPackageId;
                         workPackage.Name = wpData["subject"]?.ToString();
                         workPackage.Description = wpData["description"]?["raw"]?.ToString();
@@ -63,13 +58,12 @@ namespace hangfire_template.Services
                     }
                 }
 
-                // 6. Simpan semua perubahan ke database dalam satu transaksi
                 await db.SaveChangesAsync();
                 Console.WriteLine("Selesai menjalankan job FetchAllWorkPackages.");
             }
         }
 
-        // --- Fungsi Helper (Get or Create) ---
+        // --- Fungsi Helper (Get or Create) yang sudah diperbaiki ---
 
         private async Task<TProject> GetOrCreateProject(GSDbContext db, JToken projectData)
         {
@@ -86,7 +80,7 @@ namespace hangfire_template.Services
                     Name = projectData["name"]?.ToString()
                 };
                 db.TProjects.Add(project);
-                // Disimpan sekaligus di akhir
+                await db.SaveChangesAsync(); // Simpan langsung untuk dapat ID
             }
             return project;
         }
@@ -106,6 +100,7 @@ namespace hangfire_template.Services
                     Name = statusData["name"]?.ToString()
                 };
                 db.TStatuses.Add(status);
+                await db.SaveChangesAsync(); // Simpan langsung untuk dapat ID
             }
             return status;
         }
@@ -126,6 +121,7 @@ namespace hangfire_template.Services
                     Email = userData["email"]?.ToString()
                 };
                 db.TUsers.Add(user);
+                await db.SaveChangesAsync(); // Simpan langsung untuk dapat ID
             }
             return user;
         }

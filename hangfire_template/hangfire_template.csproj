@@ -1141,11 +1141,8 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\Extentions.cs" />
     <Compile Include="Controllers\HomeController.cs" />
-    <Compile Include="Controllers\InitialSyncController.cs" />
-    <Compile Include="Controllers\OpenProjectSyncController.cs" />
     <Compile Include="Controllers\SyncTableINFORController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
-    <Compile Include="Controllers\WebhookController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -1157,6 +1154,10 @@
     <Compile Include="Migrations\202509110402196_AlterWorkPackageTableForRelations.cs" />
     <Compile Include="Migrations\202509110402196_AlterWorkPackageTableForRelations.Designer.cs">
       <DependentUpon>202509110402196_AlterWorkPackageTableForRelations.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202509110757398_AddSyncModels.cs" />
+    <Compile Include="Migrations\202509110757398_AddSyncModels.Designer.cs">
+      <DependentUpon>202509110757398_AddSyncModels.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Master_ttfbgc1208888.cs" />
@@ -1179,6 +1180,7 @@
     <Compile Include="Models\TProject.cs" />
     <Compile Include="Models\TStatus.cs" />
     <Compile Include="Models\TSyncLog.cs" />
+    <Compile Include="Models\TTimeEntry.cs" />
     <Compile Include="Models\TUser.cs" />
     <Compile Include="Models\TWorkPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -1186,7 +1188,6 @@
     <Compile Include="Services\OpenProjectFetchJob.cs" />
     <Compile Include="Services\OpenProjectSyncJob.cs" />
     <Compile Include="Utils\ApplicationPreloadHangfireSPCTPAD.cs" />
-    <Compile Include="Utils\HangfireBootstrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Manage\" />
@@ -1197,6 +1198,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202509110402196_AlterWorkPackageTableForRelations.resx">
       <DependentUpon>202509110402196_AlterWorkPackageTableForRelations.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202509110757398_AddSyncModels.resx">
+      <DependentUpon>202509110757398_AddSyncModels.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

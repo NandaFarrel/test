@@ -18,6 +18,7 @@ namespace hangfire_template
         public virtual DbSet<TComment> TComments { get; set; }
         public virtual DbSet<TChecklist> TChecklists { get; set; }
         public virtual DbSet<TChecklistItem> TChecklistItems { get; set; }
+        public virtual DbSet<TTimeEntry> TTimeEntries { get; set; } // Tambahan untuk Spent Time
         // --------------------------------------------------------
 
         // --- Model-model Anda yang sudah ada ---
